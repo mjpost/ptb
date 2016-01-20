@@ -112,14 +112,15 @@ class Leaf:
         self.word = word
         self.pos = pos
 
+    def __str__(self):
+        return '({} {})'.format(self.pos, self.word)
+
 class TExpr:
     def __init__(self, head, first_child, next_sibling):
         self.head = head
         self.first_child = first_child
         self.next_sibling = next_sibling
         self.parent_node = None
-        if first_child is not None:
-            self.first_child.parent_node = self
 
     def symbol(self):
         if hasattr(self.head, 'label'):
@@ -193,6 +194,8 @@ def parse(line_or_lines):
                 stack.pop()
                 if tx is None:
                     tx = TExpr(None, tail, None)
+                for child in tx.children():
+                    child.parent_node = tx
                 if not stack:
                     yield tx
                 else:

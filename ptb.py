@@ -117,12 +117,18 @@ class TExpr:
         self.head = head
         self.first_child = first_child
         self.next_sibling = next_sibling
+        self.parent_node = None
+        if first_child is not None:
+            self.first_child.parent_node = self
 
     def symbol(self):
         if hasattr(self.head, 'label'):
             return self.head
         else:
             return None
+
+    def parent(self):
+        return self.parent_node
 
     def children(self):
         n = self.first_child

@@ -391,7 +391,7 @@ class ParsedSentence(object):
 TERMINAL_NODE_LABEL = '<t>'
 def make_anchored(tx):
     state = (
-        [],            # [<begin>] (pre)→(post) [(<span>, (<index>, [<child_indices>]) | None)]
+        [],            # [<begin>] (pre)->(post) [(<span>, (<index>, [<child_indices>]) | None)]
         [(-1, [])],    # [(<index>, <child_indices>)]
         0,             # next_index
         0              # current_offset
@@ -464,29 +464,38 @@ def main(args):
 
     Support output formats are: ptb, json, sentence, tagged_sentence.
     """
-    from docopt import docopt
-    args = docopt(main.__doc__, argv=args)
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--remove-empties', default=False, action='store_true')
+    parser.add_argument('--simplify-labels', default=False, action='store_true')
+    parser.add_argument('--add-root', default=False, action='store_true')
+    parser.add_argument('--root', default='ROOT')
+    parser.add_argument('--file', default='-')
+    parser.add_argument('--process', default=False, action='store_true')
+    parser.add_argument('--format', default='ptb')
+    args = parser.parse_args()
 
     def trans(t):
-        if args['--remove-empties']:
+        if args.remove_empties:
             remove_empty_elements(t)
-        if args['--simplify-labels']:
+        if args.simplify_labels:
             simplify_labels(t)
-        if args['--add-root']:
-            t = add_root(t, root_label=args['--root'])
+        if args.add_root:
+            t = add_root(t, root_label=args.root)
         return t
 
     def trees():
-        if args['<file>'] == '-':
+        if args.file == '-':
             for t in parse(sys.stdin):
                 yield trans(t)
         else:
-            with open(args['<file>'], 'r') as f:
+            with open(args.file, 'r') as f:
                 for t in parse(f):
                     yield trans(t)
 
-    if args['process']:
-        fmt = args['--format']
+    if args.process:
+        fmt = args.format
         if fmt == 'json':
             import json
             o = {'sentences' : [make_parsed_sent(t).tojson() for t in trees()]}
@@ -511,9 +520,6 @@ def main(args):
                     print(' '.join('_'.join((l.word,l.pos)) for l in leaves(t)))
                 else:
                     raise ValueError()
-
-    if args['test']:
-        dotests()
 
 if __name__ == "__main__":
     import sys

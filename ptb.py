@@ -226,35 +226,31 @@ def traverse(tx, pre=None, post=None, state=None):
 ##################
 
 
-def remove_empty_elements(tx):
-    q_none = gensym()
-    q_ok = gensym()
+def remove_empty_elements(node):
     state = [[]]
 
-    def pre(tx, st):
-        if tx.leaf() is None:
-            return st + [[]]
-        else:
-            return st
+    def pre(node, state):
+        delete = []
+        for i,child in enumerate(node.children()):
+            if child.leaf() and child.leaf().pos == '-NONE-':
+                delete.append(i)
 
-    def post(tx, st):
-        q = q_ok
-        if tx.leaf():
-            q = q_none if tx.leaf().pos == '-NONE-' else q_ok
-        else:
-            cs = st.pop()
-            cs = [c for q,c in cs if q is q_ok]
-            if cs:
-                tx.first_child = cs[0]
-                for c,d in zip(cs[:-1],cs[1:]):
-                    c.next_sibling = d
-                cs[-1].next_sibling = None
-            else:
-                q = q_none
-        st[-1].append( (q, tx) )
-        return st
+        delete.reverse()
+        for index in delete:
+            node.child_list.pop(index)
 
-    state = traverse(tx, pre, post, state)
+
+    def post(node, state):
+        delete = []
+        for i,child in enumerate(node.children()):
+            if len(child.children()) == 0 and not child.leaf():
+                delete.append(i)
+
+        delete.reverse()
+        for index in delete:
+            node.child_list.pop(index)
+
+    state = traverse(node, pre, post, state)
 
 
 def simplify_labels(tx):

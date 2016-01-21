@@ -116,10 +116,11 @@ class Leaf:
         return '({} {})'.format(self.pos, self.word)
 
 class TExpr:
-    def __init__(self, head, first_child, next_sibling):
+    def __init__(self, head, first_child = None):
         self.head = head
         self.first_child = first_child
-        self.next_sibling = next_sibling
+        self.next_sibling = None
+        self.child_list = []
         self.parent_node = None
 
     def symbol(self):
@@ -132,10 +133,7 @@ class TExpr:
         return self.parent_node
 
     def children(self):
-        n = self.first_child
-        while n is not None:
-            yield n
-            n = n.next_sibling
+        return self.child_list
 
     def leaf(self):
         if hasattr(self.head, 'pos'):
@@ -176,26 +174,31 @@ def parse(line_or_lines):
                 stack.pop()
                 stack.pop()
                 stack.pop()
-                stack.append(TExpr(w, None, None))
+                stack.append(TExpr(w))
             else:
                 tx = None
                 tail = None
+                peers = []
                 while not istok(stack[-1], LPAREN_TOKEN):
                     head = stack.pop()
                     if istok(head, STRING_TOKEN):
                         tx = TExpr(
                             Symbol(head.value),
-                            first_child = tail,
-                            next_sibling = None
+                            first_child = tail
                         )
                     else:
                         head.next_sibling = tail
                         tail = head
+                        peers.insert(0, head)
                 stack.pop()
+
                 if tx is None:
-                    tx = TExpr(None, tail, None)
+                    tx = TExpr(None, tail)
+
+                tx.child_list = peers
                 for child in tx.children():
                     child.parent_node = tx
+
                 if not stack:
                     yield tx
                 else:

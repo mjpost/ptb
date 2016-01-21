@@ -118,8 +118,6 @@ class Leaf:
 class TExpr:
     def __init__(self, head, first_child = None):
         self.head = head
-        self.first_child = first_child
-        self.next_sibling = None
         self.child_list = []
         self.parent_node = None
 
@@ -177,23 +175,19 @@ def parse(line_or_lines):
                 stack.append(TExpr(w))
             else:
                 tx = None
-                tail = None
                 peers = []
                 while not istok(stack[-1], LPAREN_TOKEN):
                     head = stack.pop()
                     if istok(head, STRING_TOKEN):
                         tx = TExpr(
-                            Symbol(head.value),
-                            first_child = tail
+                            Symbol(head.value)
                         )
                     else:
-                        head.next_sibling = tail
-                        tail = head
                         peers.insert(0, head)
                 stack.pop()
 
                 if tx is None:
-                    tx = TExpr(None, tail)
+                    tx = TExpr(None)
 
                 tx.child_list = peers
                 for child in tx.children():
